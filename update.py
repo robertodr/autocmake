@@ -117,10 +117,20 @@ def fetch_modules(config, relative_path, download_directory):
     return modules, cleaned_config
 
 
+def get_languages(yaml_languages):
+    language_aliases = {'C++': 'cxx', 'CXX': 'cxx', 'C': 'cc', 'Fortran': 'fc'}
+
+    is_list = isinstance(yaml_languages, list)
+    languages = ' '.join(yaml_languages) if is_list else yaml_languages
+
+    modules = [language_aliases[v] + '.cmake' for v in language_aliases.keys() if v in languages]
+
+    return languages, modules
+
+
 def process_yaml(argv):
     from autocmake.parse_yaml import parse_yaml
     from autocmake.generate import gen_cmakelists, gen_setup
-    from autocmake.extract import extract_list
 
     project_root = argv[1]
     if not os.path.isdir(project_root):
@@ -142,7 +152,8 @@ def process_yaml(argv):
         sys.exit(-1)
 
     if 'language' in config:
-        project_language = ' '.join(config['language']) if isinstance(config['language'], list) else config['language']
+        project_language, language_modules = get_languages(config['language'])
+        print(language_modules)
     else:
         sys.stderr.write("ERROR: you have to specify the project language(s) in autocmake.yml\n\n")
         sys.stderr.write("# for instance like this (several languages):\nlanguage:\n  - CXX\n  - Fortran\n\n")
